@@ -30,13 +30,15 @@
                   <a id="about" class="nav-item nav-link" href="{{ url_for('about') }}">About</a>
                 </div>
                 <!-- Navbar Right Side -->
-                <div class="navbar-nav">
+                  <div class="navbar-nav">
                   {% if current_user.is_authenticated %}
                     <!-- TODO: here you have the links to the logged in users -->
                     <a class="nav-item nav-link" href="#">Logged in</a>
+                    <a id="account" class="nav-item nav-link" href="{{ url_for('account') }}">Account</a>
+                    <a id="logout" class="nav-item nav-link" href="{{ url_for('logout') }}">Logout</a>
                   {% else %}
-                    <!-- TODO: here you have the links to the ordinary (not logged in) users -->
-                    <a class="nav-item nav-link" href="#">Not logged in</a>
+                    <a id="login" class="nav-item nav-link" href="{{ url_for('login') }}">Login</a>
+                    <a id="register" class="nav-item nav-link" href="{{ url_for('register') }}">Register</a>
                   {% endif %}
                 </div>
               </div>
