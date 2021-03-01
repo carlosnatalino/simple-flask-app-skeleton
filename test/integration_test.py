@@ -105,7 +105,7 @@ def test_login():
     driver.find_element_by_id('submit').click()
     time.sleep(wait_time)
 
-    assert 'new-post' in driver.page_source
+    assert 'Account' in driver.page_source
 
 
 """
@@ -117,7 +117,7 @@ def test_logout():
     driver.find_element_by_id('logout').click()
     time.sleep(wait_time)
 
-    assert 'new-post' not in driver.page_source
+    assert 'Account' not in driver.page_source
 
 
 def test_teardown():

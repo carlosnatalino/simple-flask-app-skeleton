@@ -12,14 +12,17 @@ port = 5000  # port where the process is running
 
 
 def reload_database():
+    exit_reload = False
     try:
         response = requests.get(f'http://{host}:{port}')
         print('The website seems to be running. Please stop it and run this file again.', file=sys.stderr)
-        exit(11)
+        exit_reload = True
     except:
         pass
+    if exit_reload:
+        exit(11)
     try:
-        os.remove('flaskblog/site.db')
+        os.remove('flasksite/site.db')
         print('previous DB file removed')
     except:
         print('no previous file found')
