@@ -2,12 +2,22 @@ import os
 import sys
 import random
 import datetime
+import requests
 from flasksite import db, bcrypt
 from flasksite.models import User
 from lorem_text import lorem
 
+host = 'localhost'  # host where the system is running
+port = 5000  # port where the process is running
+
 
 def reload_database():
+    try:
+        response = requests.get(f'http://{host}:{port}')
+        print('The website seems to be running. Please stop it and run this file again.', file=sys.stderr)
+        exit(11)
+    except:
+        pass
     try:
         os.remove('flaskblog/site.db')
         print('previous DB file removed')
