@@ -19,7 +19,7 @@ def about():
     return render_template('about.html', title='About')
 
 
-@app.route("/register", methods=['GET', 'POST'])
+@app.route("/register", methods=['GET', 'POST'])  # this route can receive GET and POST requests
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('home'))
@@ -28,9 +28,16 @@ def register():
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
         db.session.add(user)
-        db.session.commit()
-        flash('Your account has been created! You are now able to log in', 'success')
-        return redirect(url_for('login'))
+        try:  # error handling
+            db.session.commit()  # transaction management - databases
+            app.logger.debug('New user created successfully.')  # error handling
+            flash('Your account has been created! You are now able to log in.', 'success')
+            return redirect(url_for('login'))
+        except Exception as e:
+            db.session.rollback()  # transaction management - databases
+            app.logger.critical(f'Error while creating the user {user}')  # error handling
+            app.logger.exception(e)  # error handling
+            flash('The system encountered a problem while creating your account. Try again later.', 'danger')
     return render_template('register.html',
                            title='Register',
                            form=form)
@@ -61,6 +68,10 @@ def logout():
 
 
 def save_compressed_picture(form_picture):
+    """
+    Function that gets the file contained in the parameter `form_picture`, compresses it to a 125x125 pixels image,
+    and saves it to the `static/profile_pics` folder.
+    """
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
@@ -75,6 +86,10 @@ def save_compressed_picture(form_picture):
 
 
 def save_raw_picture(form_picture):
+    """
+    Function that gets the file contained in the parameter `form_picture`,
+    and saves it to the `static/profile_pics` folder.
+    """
     random_hex = secrets.token_hex(8)
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
@@ -91,21 +106,26 @@ def account():
     form = UpdateAccountForm()
     if form.validate_on_submit():
         if form.picture.data:
-            # picture_file = save_compressed_picture(form.picture.data)
-            picture_file = save_raw_picture(form.picture.data)
+            # (un)comment the lines below to get the desired effect
+            # picture_file = save_compressed_picture(form.picture.data)  # this function saves a compressed picture
+            picture_file = save_raw_picture(form.picture.data)  # this function saves the exact file
             current_user.image_file = picture_file
         current_user.username = form.username.data
         current_user.email = form.email.data
-        db.session.commit()
-        flash('Your account has been updated!', 'success')
-        return redirect(url_for('account'))
+        try:
+            db.session.commit()
+            flash('Your account has been updated!', 'success')
+            return redirect(url_for('account'))
+        except Exception as e:
+            db.session.rollback()
+            app.logger.critical(f'Error while updating your account. {current_user}')
+            app.logger.exception(e)
+            flash('There was an error while updating your account. Try again later.', 'danger')
     elif request.method == 'GET':
         form.username.data = current_user.username
         form.email.data = current_user.email
-    image_file = url_for('static', filename='profile_pics/' + current_user.image_file)
     return render_template('account.html',
                            title='Account',
-                           image_file=image_file,
                            form=form)
 
 

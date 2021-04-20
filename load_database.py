@@ -3,7 +3,7 @@ import sys
 import random
 import datetime
 import requests
-from flasksite import db, bcrypt
+from flasksite import db, bcrypt, app
 from flasksite.models import User
 from lorem_text import lorem
 
@@ -15,7 +15,7 @@ def reload_database():
     exit_reload = False
     try:
         response = requests.get(f'http://{host}:{port}')
-        print('The website seems to be running. Please stop it and run this file again.', file=sys.stderr)
+        app.logger.critical('The website seems to be running. Please stop it and run this file again.')
         exit_reload = True
     except:
         pass
@@ -23,9 +23,11 @@ def reload_database():
         exit(11)
     try:
         os.remove('flasksite/site.db')
-        print('previous DB file removed')
+        app.logger.info('previous DB file removed')
     except:
-        print('no previous file found')
+        app.logger.info('no previous DB file found')
+
+    assert not os.path.exists('flasksite/site.db'), 'It seems that site.db was not deleted. Please delete it manually!'
 
     db.create_all()
 
@@ -50,16 +52,35 @@ def reload_database():
                          password=hashed_password)
     db.session.add(default_user3)
 
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        app.logger.critical('Error while committing the user insertion.')
+        app.logger.exception(e)
+
+    # testing if the users were added correctly
+    assert len(User.query.all()) == 3, 'It seems that user failed to be inserted!'
+
     # TODO: Here you should include the generation of rows for your database
 
     try:
         db.session.commit()
-        print('\nFinalized - database created successfully!')
+        app.logger.info('Finalized - database created successfully!')
     except Exception as e:
-        print('The operations were not successful. Error:', file=sys.stderr)
-        print(e, file=sys.stderr)
         db.session.rollback()
+        app.logger.critical('The operations were not successful.')
+        app.logger.exception(e)
+
+
+def query_database():
+    # listing all the users
+    users = User.query.all()
+    print('\nAll users:')
+    for user in users:
+        print('\t', user)
 
 
 if __name__ == '__main__':
     reload_database()
+    query_database()
