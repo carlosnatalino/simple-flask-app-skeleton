@@ -21,20 +21,25 @@ def about():
 
 @app.route("/register", methods=['GET', 'POST'])  # this route can receive GET and POST requests
 def register():
-    if current_user.is_authenticated:
-        return redirect(url_for('home'))
-    form = RegistrationForm()
-    if form.validate_on_submit():
+    if current_user.is_authenticated:  # if the user is already authenticated
+        return redirect(url_for('home'))  # redirect the user to the home page
+    form = RegistrationForm()  # instanciates a new form -- lecture 6
+    if form.validate_on_submit():  # if the user submitted data and the data is validated
         hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
+        # create a new instance of the class User -- lecture 6
         user = User(username=form.username.data, email=form.email.data, password=hashed_password)
-        db.session.add(user)
+        db.session.add(user)  # adds the user to the database
         try:  # error handling
-            db.session.commit()  # transaction management - databases
+            # transaction management - databases
+            # the changes to the database are only persisted once you commit the session
+            db.session.commit()
             app.logger.debug('New user created successfully.')  # error handling
-            flash('Your account has been created! You are now able to log in.', 'success')
+            flash('Your account has been created! You are now able to log in.', 'success')  # show message to user
             return redirect(url_for('login'))
         except Exception as e:
-            db.session.rollback()  # transaction management - databases
+            # transaction management - databases
+            # if something goes wrong with the transaction, you need to rollback the session
+            db.session.rollback()
             app.logger.critical(f'Error while creating the user {user}')  # error handling
             app.logger.exception(e)  # error handling
             flash('The system encountered a problem while creating your account. Try again later.', 'danger')
